@@ -1,0 +1,74 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+pacman::p_load(tidyverse, googlesheets4,ggridges,viridis,hrbrthemes)
+gs4_deauth()
+# gs4_auth(email="edwardsmolina@gmail.com")
+gs4_auth(email="cerrudoanibal@gmail.com")
+
+url<- "https://docs.google.com/spreadsheets/d/1miYMUbSrg7PMLyMCWtII_PyErVdi2PihP33fgAZQfgA/edit?usp=sharing"
+#url %>% gs4_browse()
+ecb <- gs4_get(url)
+
+theme_anibal <- cowplot::theme_minimal_grid() %+replace%
+  theme(axis.text.x = element_text(angle =0,
+                                   hjust=0.5,vjust=0.5)) 
+```
+
+
+```{r}
+raw <- ecb %>% read_sheet(sheet="raw", skip=0) %>% 
+    mutate_at(vars(year,region,subregion), as.factor) %>% 
+    mutate_if(is.character, as.factor) 
+
+glimpse(raw)
+# write_excel_csv(dat)
+
+```
+
+Pottein% distribution 
+```{r}
+raw %>% 
+ggplot(aes(x = protein_db , y = year, col = year)) +
+  geom_density_ridges_gradient(scale = 2, rel_min_height = 0.02, alpha=0.6)  +
+  facet_grid(subregion~region)+
+  theme_ipsum() +
+   theme_anibal+
+  labs(x = "protein db", y = "subregions",
+              title = "Protein_distribution")
+    
+ggsave(last_plot(), w=10, h=5, 
+file = "plots/distprot.png"
+# file = "plots/este_bw.png"
+)
+```
+
+
+Protein%
+```{r}
+raw %>% 
+  drop_na (Tryp) %>%
+  #filter(region == "uuss") %>% 
+  ggplot(aes(x= subregion, y=`protein_db`, fill=year))+
+  geom_jitter( fill="1", color= "black", size=1, alpha = 0.15)+
+  geom_boxplot (outlier.shape = NA)+ #geom_jitter(width = 0.2)+
+  facet_wrap(~region)+ #,scale="free")+
+  #stat_summary(fun = "mean", colour = "red", size = 1, geom = "point")
+  theme_anibal+
+  labs(x = "Sub-regions", y = "db(%)",
+              title = "Protein")
+  
+
+ggsave(last_plot(), w=10, h=5, 
+file = "plots/prot.png"
+# file = "plots/este_bw.png"
+)
+```
